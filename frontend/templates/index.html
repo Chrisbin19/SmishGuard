@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmishGuard | AI Smishing Detection</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 400px; text-align: center; }
+        h1 { color: #00e5ff; margin-bottom: 1.5rem; }
+        textarea { width: 100%; height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #333; background-color: #2d2d2d; color: #fff; resize: none; font-size: 1rem; }
+        button { margin-top: 1rem; width: 100%; padding: 12px; border: none; border-radius: 8px; background-color: #00e5ff; color: #121212; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        button:hover { background-color: #00b8cc; }
+        #result { margin-top: 1.5rem; padding: 15px; border-radius: 8px; display: none; font-weight: bold; }
+        .safe { background-color: #1b5e20; color: #a5d6a7; border: 1px solid #2e7d32; }
+        .danger { background-color: #b71c1c; color: #ffcdd2; border: 1px solid #c62828; }
+        .score { display: block; font-size: 0.8rem; margin-top: 5px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SmishGuard 🛡️</h1>
+        <textarea id="smsText" placeholder="Paste the suspicious SMS here..."></textarea>
+        <button onclick="scanSMS()">Scan Message</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function scanSMS() {
+            const text = document.getElementById('smsText').value;
+            const resultDiv = document.getElementById('result');
+            
+            if(!text) { alert("Please enter some text!"); return; }
+
+            resultDiv.style.display = "block";
+            resultDiv.innerText = "Scanning...";
+            resultDiv.className = ""; 
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `VERDICT: ${data.status} <span class="score">Confidence: ${data.probability}</span>`;
+                resultDiv.className = data.status === "DANGER" ? "danger" : "safe";
+            } catch (error) {
+                resultDiv.innerText = "Error connecting to server.";
+            }
+        }
+    </script>
+</body>
+</html>

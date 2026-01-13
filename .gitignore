@@ -1,0 +1,32 @@
+# --- Python Basics ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environments ---
+# It is crucial NOT to commit your virtual environment
+venv/
+env/
+.env
+.venv/
+
+# --- Datasets ---
+# Never commit large datasets or sensitive data
+dataset/
+*.csv
+*.txt
+*.tsv
+
+# --- Pickles ---
+# The tokenizer binary file
+*.pickle
+*.pkl
+
+# --- IDE / OS Settings ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
