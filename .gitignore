@@ -1,0 +1,8 @@
+# Ignore the virtual environment (Heavy)
+venv/
+__pycache__/
+
+# Ignore system files
+.DS_Store
+
+# (Optional) If you had API keys, you would ignore .env here too
