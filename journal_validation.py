@@ -6,17 +6,46 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 # --- CONFIGURATION ---
 API_URL = "http://127.0.0.1:8000/predict"
-CSV_PATH = "journal_test_set.csv" # We use the file we just created
+CSV_PATH = "testdata_new.csv" 
 
 def run_benchmark():
-    print("1. Loading Unseen Test Data...")
+    print("1. Loading Unseen Test Data (Smart Mode)...")
+    
+    # --- SMART LOADER FIX ---
+    # Instead of pd.read_csv (which crashes on extra commas), 
+    # we manually read the file and split ONLY on the first comma.
+    data = []
     try:
-        df = pd.read_csv(CSV_PATH)
-        # Convert labels to numbers (spam=1, ham=0) for math
+        with open(CSV_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line: continue # Skip empty lines
+                
+                # Split the line into exactly 2 parts: Label, and The Rest
+                parts = line.split(',', 1) 
+                
+                if len(parts) == 2:
+                    label = parts[0].strip()
+                    text = parts[1].strip()
+                    
+                    # Remove surrounding quotes if they exist
+                    if text.startswith('"') and text.endswith('"'):
+                        text = text[1:-1]
+                        
+                    data.append({'label': label, 'text': text})
+                    
+        df = pd.DataFrame(data)
+        
+        # Convert labels to numbers (spam=1, ham=0)
         df['actual_numeric'] = df['label'].map({'spam': 1, 'ham': 0})
+        
+        # Drop rows where mapping failed (e.g. headers)
+        df.dropna(subset=['actual_numeric'], inplace=True)
+        
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error loading file: {e}")
         return
+    # ------------------------
 
     print(f"🚀 Starting Benchmark on {len(df)} unseen messages...")
     
@@ -54,26 +83,30 @@ def run_benchmark():
         return
 
     acc = accuracy_score(true_labels, predictions)
-    prec = precision_score(true_labels, predictions)
-    rec = recall_score(true_labels, predictions)
-    f1 = f1_score(true_labels, predictions)
+    prec = precision_score(true_labels, predictions, zero_division=0)
+    rec = recall_score(true_labels, predictions, zero_division=0)
+    f1 = f1_score(true_labels, predictions, zero_division=0)
     cm = confusion_matrix(true_labels, predictions)
 
     print("\n" + "="*60)
     print(f"📄 JOURNAL PUBLICATION METRICS")
     print("="*60)
-    print(f"✅ Accuracy:      {acc * 100:.2f}%  (Overall correctness)")
-    print(f"🎯 Precision:     {prec * 100:.2f}%  (Avoids false alarms)")
-    print(f"🔍 Recall:        {rec * 100:.2f}%  (Catches hidden spam)")
-    print(f"⚖️  F1-Score:      {f1 * 100:.2f}%  (The 'Real' Efficiency Score)")
+    print(f"✅ Accuracy:      {acc * 100:.2f}%")
+    print(f"🎯 Precision:     {prec * 100:.2f}%")
+    print(f"🔍 Recall:        {rec * 100:.2f}%")
+    print(f"⚖️  F1-Score:      {f1 * 100:.2f}%")
     print("-" * 60)
     print("CONFUSION MATRIX:")
-    print(f"True Negatives (Safe correctly identified): {cm[0][0]}")
-    print(f"False Positives (Safe marked as Danger):    {cm[0][1]}")
-    print(f"False Negatives (Spam missed):              {cm[1][0]}")
-    print(f"True Positives (Spam correctly identified): {cm[1][1]}")
+    try:
+        tn, fp, fn, tp = cm.ravel()
+        print(f"True Negatives (Safe correctly identified): {tn}")
+        print(f"False Positives (Safe marked as Danger):    {fp}")
+        print(f"False Negatives (Spam missed):              {fn}")
+        print(f"True Positives (Spam correctly identified): {tp}")
+    except:
+        print("Matrix shape mismatch (not enough data classes)")
     print("="*60)
     print(f"⏱️ Total Time: {total_time:.2f}s | Avg Latency: {(total_time/len(df))*1000:.1f}ms")
 
 if __name__ == "__main__":
-    run_benchmark()
+    run_benchmark() 
