@@ -23,6 +23,24 @@ print("Model Loaded!")
 class SMSRequest(BaseModel):
     text: str
 
+# --- COMPONENT 0: The Sanitation Layer ---
+def sanitize_text(text: str) -> str:
+    """
+    Cleans the input text to ensure the AI receives high-quality data.
+    """
+    # 1. Convert to Lowercase (Standardization)
+    text = text.lower()
+    
+    # 2. Remove Special Characters (Noise Reduction)
+    # We keep letters, numbers, spaces, and basic punctuation like $ or !
+    # This regex removes anything that ISN'T a word, whitespace, or basic punctuation.
+    text = re.sub(r'[^a-zA-Z0-9\s\$\!\.\?]', '', text)
+    
+    # 3. Remove Extra Spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
+
 # --- NEW FEATURE: The URL Detective ---
 def analyze_links(text):
     # Step 1: Find links using Regex (looks for http:// or https://)
@@ -64,8 +82,20 @@ def analyze_links(text):
 @app.post("/predict")
 async def predict_sms(request: SMSRequest):
     try:
+
+        # STEP 1: SANITATION LAYER (Clean the data)
+        clean_text = sanitize_text(request.text) 
+        
+        # STEP 2: AI PREDICTION (Use the CLEAN text)
+        tensor_text = tf.constant([clean_text])
+        # ... rest of your AI code ...
+        
+        # STEP 3: LOGIC CHECKS (You can run these on the original raw text to catch URLs)
+        #link_analysis = analyze_links(request.text)
+
+
         # 1. AI PREDICTION (The Brain)
-        tensor_text = tf.constant([request.text])
+        #tensor_text = tf.constant([request.text])
         ai_score = float(model.predict(tensor_text)[0][0]) * 100 # Convert to 0-100 scale
         
         # 2. LINK ANALYSIS (The Detective)

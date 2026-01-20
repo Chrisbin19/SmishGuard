@@ -1,0 +1,11 @@
+v1,v2
+spam,"URGENT: Your Netflix account is on hold. Please update payment details at http://netflix-secure-login.com/pay"
+spam,"Amazon: Driver is unable to deliver your package. Track here: http://bit.ly/amz-track-99"
+spam,"Coinbase Alert: A withdrawal of 0.5 BTC was requested. If this was not you, cancel immediately at http://192.168.1.5/verify"
+spam,"IRS Notification: You have a pending tax refund of $450. Claim it by logging in here: http://irs-gov-refund.xyz"
+spam,"Congratulations! You won a $1000 Walmart Gift Card. Call 888-555-0199 to claim."
+ham,"Hey man, are we still on for the movie tonight?"
+ham,"Mom, I'll be home late. Don't wait up for dinner."
+ham,"Your appointment with Dr. Smith is confirmed for Tuesday at 10 AM."
+ham,"Can you send me the notes from the history lecture?"
+ham,"The package was delivered to your front porch."
