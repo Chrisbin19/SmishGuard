@@ -1,12 +1,20 @@
-from fastapi import FastAPI, HTTPException
+import os
+# 1. FORCE UTF-8 (Prevents Windows Crash)
+os.environ["PYTHONUTF8"] = "1"
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tensorflow as tf
-import re # <-- New Tool: Regular Expressions (The Pattern Finder)
+import re
+import math
+from urllib.parse import urlparse
+import difflib 
+import spacy # <-- The New Dynamic Brain
 
 app = FastAPI()
 
-# 1. Allow Frontend Connection
+# --- CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,108 +23,215 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. Load the Brain
-print("Loading AI Model...")
-model = tf.keras.models.load_model('smishguard_model.keras', compile=False)
-print("Model Loaded!")
+# 2. LOAD PIPELINE A: The Deep Learning Brain (Bi-LSTM)
+print("🧠 Loading Neuro-Symbolic Core...")
+try:
+    model = tf.keras.models.load_model('smishguard_model.keras', compile=False)
+    print("✅ Pipeline A (Bi-LSTM) Active.")
+except Exception as e:
+    print(f"❌ CRITICAL ERROR: Model not found. {e}")
+    model = None
+
+# 3. LOAD PIPELINE B: The Linguistic Brain (spaCy NER)
+print("🗣️ Loading Dynamic Forensic Core...")
+try:
+    nlp = spacy.load("en_core_web_sm")
+    print("✅ Pipeline B (Dynamic NER) Active.")
+except:
+    print("❌ ERROR: spaCy model not found. Run 'python -m spacy download en_core_web_sm'")
+    nlp = None
 
 class SMSRequest(BaseModel):
     text: str
 
-# --- COMPONENT 0: The Sanitation Layer ---
+# ==============================================================================
+#   COMPONENT 1: THE DYNAMIC FORENSIC AGENT (Pipeline B)
+# ==============================================================================
+class DynamicForensicAgent:
+    def __init__(self):
+        # We only keep TLDs (infrastructure), NO hardcoded brands.
+        self.suspicious_tlds = ['.xyz', '.top', '.club', '.info', '.ru', '.cn', '.tk', '.cam', '.work', '.net']
+
+    def calculate_entropy(self, text):
+        """Math to detect random gibberish like 'a8z9-q2.com'"""
+        if not text: return 0
+        prob = [float(text.count(c)) / len(text) for c in dict.fromkeys(list(text))]
+        entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
+        return entropy
+
+    def extract_organizations(self, text):
+        """
+        Dynamically finds companies/brands in text using NLP.
+        Example: "Your Disney+ account is locked" -> Extracts "Disney+"
+        """
+        if not nlp: return []
+        doc = nlp(text)
+        # Extract entities labeled as ORG (Organization)
+        orgs = [ent.text.lower() for ent in doc.ents if ent.label_ == "ORG"]
+        
+        # Fallback: Regex for capitalized words (Robustness for new brands)
+        if not orgs:
+            # Finds capitalized words that aren't at the start of a sentence
+            orgs = re.findall(r'(?<!^)\b[A-Z][a-zA-Z0-9]+\b', text)
+            orgs = [o.lower() for o in orgs]
+            
+        return list(set(orgs))
+
+    def analyze(self, text, url):
+        risk_score = 0
+        logs = []
+        is_critical = False 
+        
+        # 1. Parse Domain
+        try:
+            domain = urlparse(url).netloc.lower()
+            if not domain: domain = url
+            clean_domain = domain.replace("www.", "")
+            domain_body = clean_domain.split('.')[0]
+        except:
+            domain = url
+            domain_body = url
+
+        # --- A. INFRASTRUCTURE CHECKS (Universal) ---
+        
+        # Check 1: IP Address (Instant Block)
+        if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', domain):
+            return 100, [f"🚨 CRITICAL: Host is an IP Address ({domain})"], True
+
+        # Check 2: High Entropy (Gibberish)
+        entropy = self.calculate_entropy(domain)
+        if entropy > 3.9:
+            risk_score += 40
+            logs.append(f"⚠️ High Entropy URL (Randomness {entropy:.2f})")
+
+        # --- B. DYNAMIC SEMANTIC CONSISTENCY (The Innovation) ---
+        
+        # Step 1: Who does the text CLAIM to be?
+        claimed_orgs = self.extract_organizations(text)
+        
+        # Step 2: Does the Link Match the Claim?
+        if claimed_orgs:
+            match_found = False
+            for org in claimed_orgs:
+                # Fuzzy Logic: Is the Org name inside the domain?
+                # Check 1: Substring match (e.g. "netflix" in "netflix-verify.com")
+                if org in clean_domain:
+                    match_found = True
+                
+                # Check 2: Fuzzy Logic (Levenshtein Distance)
+                # Catches "Pay-Pal" vs "PayPal"
+                elif difflib.SequenceMatcher(None, org, domain_body).ratio() > 0.70:
+                    match_found = True
+            
+            # THE VERDICT
+            if not match_found:
+                # If text claims a Brand, but URL has NO relation to it -> Deception
+                risk_score += 80 # Massive penalty
+                is_critical = True
+                logs.append(f"🎣 DYNAMIC MISMATCH: Text claims to be '{claimed_orgs[0].title()}' but URL is '{domain}'")
+            else:
+                # If they DO match, we check the TLD just in case
+                if any(tld in domain for tld in self.suspicious_tlds):
+                    risk_score += 50
+                    logs.append(f"⚠️ Brand detected but TLD is suspicious ({domain})")
+
+        # Check 3: Suspicious TLD (Fallback)
+        if any(tld in domain for tld in self.suspicious_tlds) and risk_score < 50:
+            risk_score += 40
+            logs.append(f"🚩 Suspicious Top-Level Domain")
+
+        return min(risk_score, 100), logs, is_critical
+
+# Initialize Dynamic Agent
+forensic_agent = DynamicForensicAgent()
+
+# ==============================================================================
+#   COMPONENT 2: SANITIZATION
+# ==============================================================================
 def sanitize_text(text: str) -> str:
-    """
-    Cleans the input text to ensure the AI receives high-quality data.
-    """
-    # 1. Convert to Lowercase (Standardization)
     text = text.lower()
-    
-    # 2. Remove Special Characters (Noise Reduction)
-    # We keep letters, numbers, spaces, and basic punctuation like $ or !
-    # This regex removes anything that ISN'T a word, whitespace, or basic punctuation.
     text = re.sub(r'[^a-zA-Z0-9\s\$\!\.\?]', '', text)
-    
-    # 3. Remove Extra Spaces
     text = re.sub(r'\s+', ' ', text).strip()
-    
     return text
 
-# --- NEW FEATURE: The URL Detective ---
-def analyze_links(text):
-    # Step 1: Find links using Regex (looks for http:// or https://)
-    urls = re.findall(r'https?://\S+', text)
-    
-    if not urls:
-        return {"has_links": False, "risk_score": 0, "details": "No links found"}
-
-    risk_score = 0
-    details = []
-
-    # Step 2: Check each link for danger signs
-    suspicious_tlds = ['.xyz', '.top', '.club', '.info', '.ru', '.cn']
-    shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'is.gd']
-
-    for url in urls:
-        # Check A: Is it an IP address? (e.g., http://192.168.1.1) -> VERY DANGEROUS
-        if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', url):
-            risk_score += 50
-            details.append(f"IP Address URL detected: {url}")
-
-        # Check B: Is it a URL Shortener? (Hides the real destination) -> SUSPICIOUS
-        if any(short in url for short in shorteners):
-            risk_score += 30
-            details.append(f"URL Shortener detected: {url}")
-
-        # Check C: Is it a cheap/spammy domain? (.xyz, .top) -> SUSPICIOUS
-        if any(tld in url for tld in suspicious_tlds):
-            risk_score += 20
-            details.append(f"Suspicious Domain detected: {url}")
-
-    return {
-        "has_links": True, 
-        "risk_score": risk_score, 
-        "details": "; ".join(details) if details else "Links appear standard"
-    }
-# --------------------------------------
-
+# ==============================================================================
+#   COMPONENT 3: FUSION ENDPOINT
+# ==============================================================================
+# ==============================================================================
+#   COMPONENT 3: THE FIXED "SMART TRUST" ENDPOINT
+# ==============================================================================
 @app.post("/predict")
 async def predict_sms(request: SMSRequest):
     try:
-
-        # STEP 1: SANITATION LAYER (Clean the data)
-        clean_text = sanitize_text(request.text) 
-        
-        # STEP 2: AI PREDICTION (Use the CLEAN text)
-        tensor_text = tf.constant([clean_text])
-        # ... rest of your AI code ...
-        
-        # STEP 3: LOGIC CHECKS (You can run these on the original raw text to catch URLs)
-        #link_analysis = analyze_links(request.text)
-
-
-        # 1. AI PREDICTION (The Brain)
-        #tensor_text = tf.constant([request.text])
-        ai_score = float(model.predict(tensor_text)[0][0]) * 100 # Convert to 0-100 scale
-        
-        # 2. LINK ANALYSIS (The Detective)
-        link_analysis = analyze_links(request.text)
-        
-        # 3. COMBINE SCORES
-        # We start with the AI score, but if the links are bad, we add to the risk.
-        final_risk = ai_score + link_analysis['risk_score']
-        
-        # Cap the score at 100%
-        if final_risk > 100:
-            final_risk = 100
+        # 1. AI PREDICTION (Pipeline A)
+        clean_text = sanitize_text(request.text)
+        try:
+            if model:
+                tensor_text = tf.constant([clean_text])
+                ai_probability = float(model.predict(tensor_text)[0][0]) * 100
+            else:
+                ai_probability = 0
+        except:
+            ai_probability = 0
             
-        is_phishing = final_risk > 50
+        # 2. DYNAMIC LOGIC (Pipeline B)
+        forensic_risk = 0
+        forensic_logs = []
+        is_critical = False
+        detected_entities = [] # Capture entities for the response
+        
+        urls = re.findall(r'https?://\S+', request.text)
+        if urls:
+            risk, logs, critical = forensic_agent.analyze(request.text, urls[0])
+            forensic_risk = risk
+            forensic_logs = logs
+            is_critical = critical
+            # Re-extract entities just for the frontend display
+            detected_entities = forensic_agent.extract_organizations(request.text)
+        
+        # --- 3. THE FIXED FUSION LOGIC (Smart Trust) ---
+        
+        # Scenario A: CRITICAL THREAT (Agent found hard evidence) -> BLOCK
+        if is_critical:
+            final_score = 100.0
+            reason = "Forensic Override (Critical)"
+            
+        # Scenario B: NO LINKS FOUND (Agent is blind) -> TRUST AI 100%
+        # THIS IS THE FIX. We do NOT average with 0.
+        elif not urls:
+            final_score = ai_probability
+            reason = "AI Intuition (No Links)"
+            
+        # Scenario C: LINKS FOUND (Both brains have an opinion)
+        else:
+            # If Agent sees distinct danger (Risk > 50), trust the Agent.
+            if forensic_risk >= 50:
+                 final_score = max(ai_probability, forensic_risk)
+                 reason = "High Forensic Risk"
+            
+            # If Agent is unsure (Risk < 50), check the AI.
+            else:
+                # If AI is very confident (>80), trust the AI.
+                if ai_probability > 80:
+                    final_score = ai_probability
+                    reason = "AI Dominance"
+                # Only average them if BOTH are unsure.
+                else:
+                    final_score = (ai_probability * 0.5) + (forensic_risk * 0.5)
+                    reason = "Hybrid Consensus"
+
+        # Cap score at 100 just in case
+        final_score = min(final_score, 100)
+        is_phishing = final_score > 50
 
         return {
             "is_phishing": is_phishing,
-            "final_risk_score": f"{final_risk:.2f}%",
-            "ai_score": f"{ai_score:.2f}%",
-            "link_warnings": link_analysis['details'],
-            "message": "CAUTION: Phishing Detected!" if is_phishing else "Message seems Safe."
+            "final_risk_score": f"{final_score:.2f}%",
+            "ai_score": f"{ai_probability:.2f}%",
+            "forensic_score": f"{forensic_risk:.2f}%",
+            "link_warnings": "; ".join(forensic_logs) if forensic_logs else "No anomalies.",
+            "logic_mode": reason,
+            "entities_detected": detected_entities
         }
         
     except Exception as e:
