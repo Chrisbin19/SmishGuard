@@ -4,6 +4,8 @@ import tensorflow as tf
 import pickle
 import glob
 import os
+import re
+import tldextract
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -13,110 +15,129 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # --- CONFIGURATION ---
 DATASET_PATH = '../dataset/'
-MAX_WORDS = 20000       # Large vocabulary to cover both SMS slang and URL parts
-MAX_LEN = 200           # URLs can be long, so we increase this
-EMBEDDING_DIM = 100     # Dimension of the word vectors
+MAX_WORDS = 25000       # Increased to accommodate new forensic tokens
+MAX_LEN = 200 
+EMBEDDING_DIM = 100 
+
+# --- NEW: FORENSIC AUGMENTATION HELPER ---
+def augment_training_text(text):
+    """
+    Analyzes URLs in training data and appends special tokens.
+    This teaches the LSTM to recognize technical red flags.
+    """
+    text_str = str(text).lower()
+    url_pattern = re.compile(r'https?://\S+|www\.\S+')
+    urls = url_pattern.findall(text_str)
+    
+    if not urls:
+        return text_str
+    
+    url = urls[0]
+    ext = tldextract.extract(url)
+    reg_domain = f"{ext.domain}.{ext.suffix}"
+    
+    tokens = []
+    # Brand Spoof Check (The "Offline Detective")
+    brands = {
+        'whatsapp': 'whatsapp.com', 'facebook': 'facebook.com', 
+        'paypal': 'paypal.com', 'amazon': 'amazon.com',
+        'apple': 'apple.com', 'netflix': 'netflix.com'
+    }
+    for brand, legit in brands.items():
+        if brand in text_str and legit != reg_domain:
+            tokens.append("[TOKEN_URL_SPOOF]")
+            break
+            
+    # Technical Red Flags
+    if re.match(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', ext.domain):
+        tokens.append("[TOKEN_URL_IP]")
+    if ext.suffix in ['xyz', 'top', 'vip', 'info']:
+        tokens.append("[TOKEN_URL_SUSPICIOUS]")
+        
+    return f"{text_str} {' '.join(tokens)}"
 
 def load_specific_file(filepath):
     filename = os.path.basename(filepath)
     df = None
-
     print(f"Processing: {filename} ...")
 
     try:
-        # CASE 1: The standard Spam Dataset (needs Latin-1)
+        # CASE 1: Standard Spam (Latin-1)
         if 'spam.csv' in filename:
             df = pd.read_csv(filepath, encoding='latin-1')
-            # Usually v1=label, v2=text
             if 'v1' in df.columns:
                 df = df.rename(columns={'v1': 'label', 'v2': 'text'})
 
-        # CASE 2: The Collection Files (Txt/Tab-separated, No Header)
+        # CASE 2: Collection/Txt Files
         elif 'Collection' in filename or filename.endswith('.txt'):
             try:
                 df = pd.read_csv(filepath, sep='\t', header=None, names=['label', 'text'])
             except:
-                # Fallback if it's not actually tab separated
                 df = pd.read_csv(filepath, on_bad_lines='skip')
 
-        # CASE 3: Malicious Phish (url, type)
+        # CASE 3: Malicious Phish
         elif 'malicious_phish' in filename:
             df = pd.read_csv(filepath)
             df = df.rename(columns={'url': 'text', 'type': 'label'})
 
-        # CASE 4: PhiUSIIL (Complex dataset)
+        # CASE 4: PhiUSIIL
         elif 'PhiUSIIL' in filename:
             df = pd.read_csv(filepath)
-            df = df.rename(columns={'URL': 'text'}) # Label column already exists
-        
-        # CASE 5: Generic / Review CSVs
+            df = df.rename(columns={'URL': 'text'})
+
+        # CASE 5: Top 1M Benign URLs (Force Label 0)
+        elif 'top-1m' in filename:
+            df = pd.read_csv(filepath, header=None, names=['rank', 'text'])
+            df['label'] = 0
+
+        # CASE 6: Review Me (Your Manual Corrections)
+        elif 'review_me' in filename:
+            df = pd.read_csv(filepath)
+            # OVER-SAMPLING: Multiply rows to ensure the model prioritizes these fixes
+            df = pd.concat([df] * 10, ignore_index=True) 
+
         else:
             df = pd.read_csv(filepath)
-            # Generic cleanup
             if 'URL' in df.columns: df.rename(columns={'URL': 'text'}, inplace=True)
             if 'message' in df.columns: df.rename(columns={'message': 'text'}, inplace=True)
 
-        # FINAL CHECK: Ensure we have text and label
         if df is not None:
-            # Ensure columns exist
-            if 'text' not in df.columns or 'label' not in df.columns:
-                print(f"  -> Skipping {filename}: Missing 'text' or 'label' columns.")
-                return None
-            
-            # Keep only what we need
             return df[['text', 'label']]
             
     except Exception as e:
         print(f"  -> Error loading {filename}: {e}")
         return None
 
-    return None
-
-# --- 1. LOAD DATA ---
+# --- 1. LOAD & NORMALIZE ---
 all_files = glob.glob(os.path.join(DATASET_PATH, "*"))
 df_list = []
 
 for filepath in all_files:
     df = load_specific_file(filepath)
     if df is not None:
-        # Clean 'text' column just in case
-        df['text'] = df['text'].astype(str)
         df_list.append(df)
-        print(f"  -> Successfully loaded {len(df)} rows.")
-
-if not df_list:
-    print("CRITICAL ERROR: No data loaded.")
-    exit()
 
 data = pd.concat(df_list, ignore_index=True)
-print(f"\nTotal Raw Rows: {len(data)}")
 
-# --- 2. CLEAN LABELS ---
-# Map everything to integers. Drop unknown labels like '?'
+# Normalize Labels (Handling ham, spam, benign, etc.)
 label_map = {
     'ham': 0, 'safe': 0, 'benign': 0, '0': 0, 0: 0,
     'spam': 1, 'smish': 1, 'phishing': 1, 'malicious': 1, '1': 1, 1: 1
 }
-
 data['label'] = data['label'].map(label_map)
-data.dropna(subset=['label'], inplace=True) # Drop '?' or errors
+data.dropna(subset=['label', 'text'], inplace=True)
 data['label'] = data['label'].astype(int)
 
+# --- 2. DYNAMIC FORENSIC AUGMENTATION ---
+print("Augmenting text with forensic tokens (Dynamic NLP Step)...")
+data['text'] = data['text'].apply(augment_training_text)
+
 # --- 3. BALANCE DATA ---
-# This ensures the model doesn't just guess "Safe" because most data is Safe
 spam_df = data[data['label'] == 1]
 ham_df = data[data['label'] == 0]
-
-print(f"Safe Count: {len(ham_df)}")
-print(f"Scam Count: {len(spam_df)}")
-
-# Balance them 50/50
 min_len = min(len(ham_df), len(spam_df))
-ham_downsampled = ham_df.sample(n=min_len, random_state=42)
-spam_downsampled = spam_df.sample(n=min_len, random_state=42)
-
-balanced_data = pd.concat([ham_downsampled, spam_downsampled])
-print(f"Training on {len(balanced_data)} balanced rows.")
+balanced_data = pd.concat([ham_df.sample(n=min_len, random_state=42), 
+                           spam_df.sample(n=min_len, random_state=42)])
 
 # --- 4. TOKENIZATION ---
 texts = balanced_data['text'].tolist()
@@ -127,15 +148,12 @@ tokenizer.fit_on_texts(texts)
 sequences = tokenizer.texts_to_sequences(texts)
 padded_sequences = pad_sequences(sequences, maxlen=MAX_LEN, padding='post', truncating='post')
 
-# Save Tokenizer
 with open('tokenizer.pickle', 'wb') as handle:
     pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-# Split
 X_train, X_test, y_train, y_test = train_test_split(padded_sequences, labels, test_size=0.2, random_state=42)
 
 # --- 5. BUILD MODEL ---
-# Using Bidirectional LSTM for better context understanding
 model = Sequential([
     Embedding(input_dim=MAX_WORDS, output_dim=EMBEDDING_DIM, input_length=MAX_LEN),
     Bidirectional(LSTM(64, return_sequences=False)),
@@ -146,22 +164,14 @@ model = Sequential([
 ])
 
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.summary()
 
-# --- 6. TRAIN WITH CALLBACKS ---
-# EarlyStopping: Stop if not improving
-# ModelCheckpoint: Save the BEST model, not just the last one
+# --- 6. TRAIN ---
 callbacks = [
     EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True),
     ModelCheckpoint('smishing_model.keras', save_best_only=True, monitor='val_accuracy')
 ]
 
-history = model.fit(
-    X_train, y_train,
-    epochs=10,
-    batch_size=64,
-    validation_data=(X_test, y_test),
-    callbacks=callbacks
-)
+model.fit(X_train, y_train, epochs=10, batch_size=64, 
+          validation_data=(X_test, y_test), callbacks=callbacks)
 
-print("Training Complete. Best model saved as 'smishing_model.keras'")
+print("✅ Hybrid Model Training Complete! Best model saved as 'smishing_model.keras'")
