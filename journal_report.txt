@@ -22,14 +22,14 @@ False Negatives (Spam missed)            : 1
 
 ADVERSARIAL ROBUSTNESS
 ─────────────────────────────────────────────────────────────
-Overall Score       : 78.8%
-Passed              : 26/33
+Overall Score       : 84.8%
+Passed              : 28/33
 
 Category Breakdown:
   Friendly+Malicious URL      : 3/5 (60%)
   Homoglyph Attack            : 3/3 (100%)
-  Segmentation Attack         : 1/2 (50%)
-  Modern Brand Smishing       : 3/5 (60%)
+  Segmentation Attack         : 2/2 (100%)
+  Modern Brand Smishing       : 4/5 (80%)
   Positive Sentiment          : 3/3 (100%)
   OTP/Bank Fraud              : 3/3 (100%)
   Delivery Scam               : 2/2 (100%)
@@ -37,10 +37,10 @@ Category Breakdown:
 
 LATENCY BENCHMARK
 ─────────────────────────────────────────────────────────────
-Average Latency     : 109.7 ms
-Median  (P50)       : 108.9 ms
-P95 Latency         : 128.1 ms
-P99 Latency         : 139.6 ms
+Average Latency     : 106.7 ms
+Median  (P50)       : 106.0 ms
+P95 Latency         : 126.8 ms
+P99 Latency         : 134.2 ms
 
 FIGURES GENERATED
 ─────────────────────────────────────────────────────────────
