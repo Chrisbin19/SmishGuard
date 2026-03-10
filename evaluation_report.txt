@@ -1,0 +1,37 @@
+
+
+==============================================================
+   SMISHGUARD - COMPREHENSIVE EVALUATION REPORT CARD
+   Generated: 2026-03-03 17:35:01
+==============================================================
+
+  1. CORE ACCURACY (spam.csv)
+  ----------------------------------------
+    Accuracy:       99.20%
+    Precision:      100.00%
+    Recall:         98.40%
+    F1 Score:       99.19%
+    TP: 246  FN: 4  TN: 250  FP: 0
+
+  2. ADVERSARIAL ROBUSTNESS
+  ----------------------------------------
+    Attacks Blocked: 13/15 (86.7%)
+
+  3. LATENCY & THROUGHPUT
+  ----------------------------------------
+    Avg Latency:    94.33 ms
+    P95 Latency:    117.10 ms
+    Throughput:     10.60 req/s
+
+  4. EDGE CASE RESILIENCE
+  ----------------------------------------
+    Handled:        10/10 (100.0%)
+
+  5. FALSE POSITIVE AUDIT
+  ----------------------------------------
+    Clean Rate:     9/10 (90.0% correct)
+    False Positives: 1
+
+==============================================================
+   OVERALL GRADE: A - Excellent (94.0%)
+==============================================================

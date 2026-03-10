@@ -1,0 +1,31 @@
+﻿1. Loading and Cleaning Data...
+
+≡ƒÜÇ Testing 200 messages against Localhost API...
+d:\smishguard-backend\venv\S
+cripts\python.exe : 
+At line:1 char:53
++ ... NG="utf-8"; d:\smishgu
+ard-backend\venv\Scripts\pyt
+hon.exe test_perfor ...
++                 ~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          
+:     NotSpecified: 
+(:String)     [], 
+RemoteException
+    + FullyQualifiedErrorId 
+:     NativeCommandError
+ 
+  0%|          | 0/200 
+[00:00<?, ?it/s]
+  5%|Γûî         | 10/200 
+[00:00<00:01, 117.88it/s]
+
+==================================================
+≡ƒôè REAL PERFORMANCE REPORT
+==================================================
+Γ£à Accuracy:      4.00%
+ΓÜí Avg Latency:   0.42 ms
+Γ¥î Errors:        0
+==================================================

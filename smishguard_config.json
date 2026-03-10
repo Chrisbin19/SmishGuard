@@ -1,0 +1,7 @@
+{
+  "threshold": 0.2530052661895752,
+  "threshold_percent": 25.3005,
+  "model_version": "v2_final",
+  "test_roc_auc": 0.9976,
+  "notes": "Upgraded Bi-LSTM, stacked layers, bigrams, class weights"
+}

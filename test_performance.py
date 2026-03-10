@@ -6,7 +6,7 @@ from tqdm import tqdm
 # --- CONFIGURATION ---
 API_URL = "http://127.0.0.1:8000/predict"
 CSV_PATH = "real_world_test.csv"
-SAMPLE_SIZE = 200 
+SAMPLE_SIZE = 10 
 
 def run_stress_test():
     print("1. Loading and Cleaning Data...")

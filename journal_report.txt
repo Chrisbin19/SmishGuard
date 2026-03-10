@@ -1,0 +1,49 @@
+
+================================================================
+SMISHGUARD v2 — JOURNAL EVALUATION REPORT
+================================================================
+
+STANDARD BENCHMARK (n=500)
+─────────────────────────────────────────────────────────────
+Accuracy            : 99.80%
+Precision           : 100.00%
+Recall              : 99.58%
+F1 Score            : 99.79%
+ROC-AUC             : 1.0000
+False Positive Rate : 0.00%
+False Negative Rate : 0.42%
+
+CONFUSION MATRIX
+─────────────────────────────────────────────────────────────
+True Positives  (Spam correctly blocked) : 237
+True Negatives  (Safe correctly passed)  : 262
+False Positives (Safe wrongly flagged)   : 0
+False Negatives (Spam missed)            : 1
+
+ADVERSARIAL ROBUSTNESS
+─────────────────────────────────────────────────────────────
+Overall Score       : 78.8%
+Passed              : 26/33
+
+Category Breakdown:
+  Friendly+Malicious URL      : 3/5 (60%)
+  Homoglyph Attack            : 3/3 (100%)
+  Segmentation Attack         : 1/2 (50%)
+  Modern Brand Smishing       : 3/5 (60%)
+  Positive Sentiment          : 3/3 (100%)
+  OTP/Bank Fraud              : 3/3 (100%)
+  Delivery Scam               : 2/2 (100%)
+  Legitimate HAM              : 8/8 (100%)
+
+LATENCY BENCHMARK
+─────────────────────────────────────────────────────────────
+Average Latency     : 109.7 ms
+Median  (P50)       : 108.9 ms
+P95 Latency         : 128.1 ms
+P99 Latency         : 139.6 ms
+
+FIGURES GENERATED
+─────────────────────────────────────────────────────────────
+confusion_matrix.png  — for paper Figure X
+roc_curve.png         — for paper Figure Y
+================================================================

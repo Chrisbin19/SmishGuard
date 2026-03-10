@@ -1,0 +1,59 @@
+﻿============================================================
+≡ƒ¢í∩╕Å  STARTING ADVERSARIAL ROBUSTNESS STRESS TEST
+============================================================
+
+Testing Case 1 [Homoglyph]:
+≡ƒô¥ Input: URGENT: Your P╬▒yPal account is limited. Restore here: http://secure-pp-verify.com
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 10.8ms
+   -> Entities Found: ['p╬▒ypal']
+--------------------------------------------------
+Testing Case 2 [Homoglyph]:
+≡ƒô¥ Input: Security Alert: Am@zon login detected from Russia. Verify: http://amzn-security-check.xyz
+Γ£à BLOCKED | Reason: High Forensic Risk | Latency: 18.2ms
+   -> Entities Found: ['russia', 'alert', 'verify', 'am']
+--------------------------------------------------
+Testing Case 3 [Segmentation]:
+≡ƒô¥ Input: D.e.a.r C.u.s.t.o.m.e.r, your N.e.t.f.l.i.x is on hold. Pay: http://netflix-billing-update.com
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 10.1ms
+   -> Entities Found: ['pay']
+--------------------------------------------------
+Testing Case 4 [Segmentation]:
+≡ƒô¥ Input: W-A-R-N-I-N-G: Your C.i.t.i.B.a.n.k card is blocked. Action required: http://citi-confirm.net
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 20.4ms
+   -> Entities Found: ['action', 'your']
+--------------------------------------------------
+Testing Case 5 [New Gen Brand]:
+≡ƒô¥ Input: Your Disney+ subscription has expired. Renew membership: http://disney-renewals.com
+Γ¥î FAILED | The system thought this was Safe.
+   -> AI Score: 0.00% | Forensic: 0.00%
+--------------------------------------------------
+Testing Case 6 [New Gen Brand]:
+≡ƒô¥ Input: Binance Withdrawal Alert: 0.5 BTC requested. Cancel transaction: http://binance-fraud-control.com
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 15.3ms
+   -> Entities Found: ['btc']
+--------------------------------------------------
+Testing Case 7 [Positive Sentiment]:
+≡ƒô¥ Input: We are happy to inform you that your refund has been approved! Great news! Click to accept: http://irs-refund-claim.xyz
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 16.1ms
+   -> Entities Found: ['click', 'great']
+--------------------------------------------------
+Testing Case 8 [Positive Sentiment]:
+≡ƒô¥ Input: Thank you for being a loyal customer. Here is a free gift card for you: http://amazon-gifts-free.top
+Γ£à BLOCKED | Reason: Forensic Override (Critical) | Latency: 15.0ms
+   -> Entities Found: ['here']
+--------------------------------------------------
+Testing Case 9 [Semantic Mismatch]:
+≡ƒô¥ Input: Please login to your Microsoft Office account to view the document: http://google-drive-share.com
+Γ¥î FAILED | The system thought this was Safe.
+   -> AI Score: 0.00% | Forensic: 0.00%
+--------------------------------------------------
+
+============================================================
+≡ƒôè FINAL ROBUSTNESS REPORT
+============================================================
+Total Attacks: 9
+Attacks Blocked: 7
+Attacks Missed:  2
+≡ƒ¢í∩╕Å  ADVERSARIAL ROBUSTNESS SCORE: 77.78%
+
+ΓÜá∩╕Å CONCLUSION: System needs tuning.

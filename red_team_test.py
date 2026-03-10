@@ -33,7 +33,7 @@ test_cases = [
     
     # CATEGORY 5: THE ULTIMATE DECEPTION (Semantic Mismatch)
     # Text says one thing, link says another.
-    {"text": "Please login to your Microsoft Office account to view the document: http://google-drive-share.com", "type": "Semantic Mismatch"},
+    {"text": "I would like to meet you could you send me some money via https://www.pay.com", "type": "Semantic Mismatch"},
 ]
 
 def run_stress_test():

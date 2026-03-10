@@ -1,0 +1,17 @@
+﻿Loading data...
+Test set: 100 spam + 100 ham = 200 total
+
+==================================================
+PERFORMANCE REPORT (200 messages tested)
+==================================================
+Accuracy:   50.50%
+Precision:  100.00% (of flagged messages, how many were actually spam)
+Recall:     1.00% (of actual spam, how many were caught)
+F1 Score:   1.98%
+==================================================
+Confusion Matrix:
+  True Positives  (Spam caught):     1
+  False Positives (Ham wrongly flagged): 0
+  True Negatives  (Ham correct):     100
+  False Negatives (Spam missed):     99
+==================================================

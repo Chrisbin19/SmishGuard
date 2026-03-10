@@ -18,7 +18,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -222,7 +222,7 @@ async def predict_sms(request: SMSRequest):
 
         # Cap score at 100 just in case
         final_score = min(final_score, 100)
-        is_phishing = final_score > 50
+        is_phishing = final_score >= 50
 
         return {
             "is_phishing": is_phishing,

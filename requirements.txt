@@ -1,0 +1,17 @@
+# Core API
+fastapi==0.111.0
+uvicorn==0.29.0
+pydantic==2.7.1
+
+# Deep Learning Brain (Pipeline A)
+tensorflow==2.16.1
+
+# NLP Brain (Pipeline B)
+spacy==3.7.4
+
+# Data & Testing
+pandas==2.2.2
+scikit-learn==1.4.2
+requests==2.31.0
+tqdm==4.66.4
+colorama==0.4.6

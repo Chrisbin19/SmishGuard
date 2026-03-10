@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 # --- CONFIGURATION ---
 API_URL = "http://127.0.0.1:8000/predict"
-CSV_PATH = "testdata_new.csv" 
+CSV_PATH = "journal_test_set.csv" 
 
 def run_benchmark():
     print("1. Loading Unseen Test Data (Smart Mode)...")
