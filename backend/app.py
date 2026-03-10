@@ -417,9 +417,11 @@ def test_custom_csv():
     except Exception as e:
         return jsonify({'error': f"Pandas Processing Error: {str(e)}"}), 500
 
-# ==========================================
-# --- 8. SERVER START ---
-# ==========================================
+@app.route('/accuracy')
+def accuracy_page():
+    """ Renders the advanced system benchmark dashboard. """
+    return render_template('accuracy.html')
+
 if __name__ == '__main__':
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] SmishGuard API v2 is now LIVE.")
     print("Point your Android app or Frontend to:")

@@ -1,0 +1,13 @@
+graph LR
+    subgraph Mobile_Device [Android Client]
+        A[Inbound SMS PDU] --> B["BroadcastReceiver<br/>(onReceive)"]
+        B --> C["SmsMessage Parser<br/>(Body & Sender)"]
+    end
+
+    subgraph Network_Transport [Data Transfer]
+        C --> D["Retrofit / OkHttp"]
+        D -- "POST /scan (JSON)" --> E["Flask API Endpoint"]
+    end
+
+    style B fill:#f9f,stroke:#333
+    style E fill:#2563eb,color:#fff
