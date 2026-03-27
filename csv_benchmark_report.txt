@@ -1,0 +1,34 @@
+
+================================================================
+SmishGuard v2 — CSV Benchmark Report
+Dataset : binjo_test.csv
+Tested  : 5971 messages (0 errors)
+================================================================
+
+PERFORMANCE METRICS
+─────────────────────────────────────────────────────────────
+Accuracy            : 99.68%
+Precision           : 100.00%
+Recall              : 98.31%
+F1 Score            : 99.15%
+ROC-AUC             : 0.9988
+False Positive Rate : 0.00%
+False Negative Rate : 1.69%
+
+CONFUSION MATRIX
+─────────────────────────────────────────────────────────────
+True Positives  (Spam correctly blocked) : 1108
+True Negatives  (Safe correctly passed)  : 4844
+False Positives (Safe wrongly flagged)   : 0
+False Negatives (Spam missed)            : 19
+
+LATENCY
+─────────────────────────────────────────────────────────────
+Average  : 101.8 ms
+P95      : 121.6 ms
+
+FIGURES
+─────────────────────────────────────────────────────────────
+confusion_matrix.png
+roc_curve.png
+================================================================
