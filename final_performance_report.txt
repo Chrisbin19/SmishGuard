@@ -1,0 +1,28 @@
+=======================================================
+   SMISHGUARD V2: HOLD-OUT PERFORMANCE REPORT
+=======================================================
+Dataset Evaluated: true_holdout_test.csv (Unseen data)
+Total Messages:    1,973
+Test Type:         Blind Verification
+=======================================================
+
+🚀 FINAL METRICS:
+-------------------------------------------------------
+✅ Accuracy:   98.48%  (0.9848)
+🎯 Precision: 100.00%  (1.0000)
+🔍 Recall:     96.76%  (0.9676)
+⚖️ F1-Score:   98.36%  (0.9836)
+-------------------------------------------------------
+
+CONFUSION MATRIX SUMMARY:
+* The model correctly identified 96.7% of all smishing attacks.
+* The model achieved a mathematically perfect 100.0% Precision rating.
+* There were ZERO False Positives (i.e. zero safe messages were accidentally blocked).
+
+CONCLUSION:
+The evaluated model demonstrates exception generalisation. The 100% precision score is successfully governed by the Neuro-Symbolic Fusion architecture (Pipeline B) acting as a safety valve over the Deep Learning inferences (Pipeline A).
+
+Plots Generated:
+🖼️ confusion_matrix_ppt.png
+📉 roc_curve_ppt.png
+=======================================================

@@ -29,6 +29,7 @@ import json
 import re
 import os
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -47,8 +48,8 @@ warnings.filterwarnings("ignore")
 #  CONFIGURATION — change port if needed
 # ================================================================
 API_URL    = "http://127.0.0.1:8000/predict"
-CSV_PATH   = "combined_smishing.csv"   # your test dataset
-SAMPLE_SIZE = 500                       # rows to test (set None for all)
+CSV_PATH   = "test/Dataset_5971.csv"      # your test dataset
+SAMPLE_SIZE = None                      # rows to test (set None for all)
 TIMEOUT     = 10                        # seconds per request
 
 # ================================================================
@@ -153,6 +154,7 @@ def run_standard_benchmark() -> dict:
         df = pd.read_csv(CSV_PATH, encoding="latin-1")
 
         # Handle different column names
+        df.columns = [str(c).lower() for c in df.columns]
         if "v1" in df.columns and "v2" in df.columns:
             df = df[["v1", "v2"]]
             df.columns = ["label", "text"]
@@ -162,8 +164,8 @@ def run_standard_benchmark() -> dict:
             raise ValueError(f"Unknown columns: {list(df.columns)}")
 
         df["label"] = df["label"].str.lower().str.strip()
-        df = df[df["label"].isin(["spam", "ham"])].dropna()
-        df["label_num"] = df["label"].map({"spam": 1, "ham": 0})
+        df = df[df["label"].isin(["spam", "ham", "smishing"])].dropna()
+        df["label_num"] = df["label"].map({"spam": 1, "smishing": 1, "ham": 0})
 
         # Sample if needed
         if SAMPLE_SIZE and len(df) > SAMPLE_SIZE:
@@ -186,24 +188,27 @@ def run_standard_benchmark() -> dict:
     latencies = []
 
     print(f"\nRunning predictions...")
-    for _, row in tqdm(df.iterrows(), total=len(df), ncols=70):
-        t0     = time.time()
+    def fetch(row):
+        t0 = time.time()
         result = call_api(str(row["text"]))
         latency = (time.time() - t0) * 1000
+        return row, result, latency
+    
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        for row, result, latency in tqdm(executor.map(fetch, [row for _, row in df.iterrows()]), total=len(df), ncols=70):
+            if result and "is_phishing" in result:
+                y_true.append(int(row["label_num"]))
+                y_pred.append(1 if result["is_phishing"] else 0)
 
-        if result and "is_phishing" in result:
-            y_true.append(int(row["label_num"]))
-            y_pred.append(1 if result["is_phishing"] else 0)
-
-            # Extract numeric score from "52.14%"
-            try:
-                score = float(result["final_risk_score"].replace("%", "")) / 100
-            except Exception:
-                score = 0.5
-            y_scores.append(score)
-            latencies.append(latency)
-        else:
-            errors += 1
+                # Extract numeric score from "52.14%"
+                try:
+                    score = float(result["final_risk_score"].replace("%", "")) / 100
+                except Exception:
+                    score = 0.5
+                y_scores.append(score)
+                latencies.append(latency)
+            else:
+                errors += 1
 
     if not y_true:
         print("❌ No predictions received. Is the server running?")

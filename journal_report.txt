@@ -3,22 +3,22 @@
 SMISHGUARD v2 — JOURNAL EVALUATION REPORT
 ================================================================
 
-STANDARD BENCHMARK (n=500)
+STANDARD BENCHMARK (n=5971)
 ─────────────────────────────────────────────────────────────
-Accuracy            : 99.80%
+Accuracy            : 99.68%
 Precision           : 100.00%
-Recall              : 99.58%
-F1 Score            : 99.79%
-ROC-AUC             : 1.0000
+Recall              : 98.31%
+F1 Score            : 99.15%
+ROC-AUC             : 0.9988
 False Positive Rate : 0.00%
-False Negative Rate : 0.42%
+False Negative Rate : 1.69%
 
 CONFUSION MATRIX
 ─────────────────────────────────────────────────────────────
-True Positives  (Spam correctly blocked) : 237
-True Negatives  (Safe correctly passed)  : 262
+True Positives  (Spam correctly blocked) : 1108
+True Negatives  (Safe correctly passed)  : 4844
 False Positives (Safe wrongly flagged)   : 0
-False Negatives (Spam missed)            : 1
+False Negatives (Spam missed)            : 19
 
 ADVERSARIAL ROBUSTNESS
 ─────────────────────────────────────────────────────────────
@@ -38,9 +38,9 @@ Category Breakdown:
 LATENCY BENCHMARK
 ─────────────────────────────────────────────────────────────
 Average Latency     : 106.7 ms
-Median  (P50)       : 106.0 ms
-P95 Latency         : 126.8 ms
-P99 Latency         : 134.2 ms
+Median  (P50)       : 105.2 ms
+P95 Latency         : 119.5 ms
+P99 Latency         : 125.6 ms
 
 FIGURES GENERATED
 ─────────────────────────────────────────────────────────────
